@@ -1,10 +1,10 @@
-const CACHE = 'chloe-timer-v1';
+const CACHE = 'cmb-timer-v1';
 const ASSETS = [
-  '/chloe-timer/',
-  '/chloe-timer/index.html',
-  '/chloe-timer/manifest.json',
-  '/chloe-timer/icon-192.png',
-  '/chloe-timer/icon-512.png'
+  '/cmb-timer/',
+  '/cmb-timer/index.html',
+  '/cmb-timer/manifest.json',
+  '/cmb-timer/icon-192.png',
+  '/cmb-timer/icon-512.png'
 ];
 
 self.addEventListener('install', e => {
