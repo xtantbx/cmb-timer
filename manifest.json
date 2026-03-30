@@ -2,7 +2,7 @@
   "name": "Chloé Timer",
   "short_name": "Chloé Timer",
   "description": "A simple timer for Chloé",
-  "start_url": "/chloe-timer/",
+  "start_url": "/cmb-timer/",
   "display": "fullscreen",
   "orientation": "portrait",
   "background_color": "#f4ecef",
