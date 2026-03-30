@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="theme-color" content="#f4ecef">
+<meta name="mobile-web-app-capable" content="true">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<title>Chloé Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700;9..40,900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+
+  :root {
+    --bg: #f4ecef; --surface: #e4d4da;
+    --tab-active-bg: #ffffff; --tab-active-text: #9e1a42; --tab-inactive: #7a4858;
+    --ring-bg: #d8c4cc; --time-color: #9e1a42; --time-sleep: #162090; --time-done: #0a7038;
+    --preset-bg: #ffffff; --preset-border: #c87890; --preset-text: #7a1838;
+    --preset-sel-bg: #f2bcc8; --preset-sel-text: #800a28; --preset-sel-border: #c02850;
+    --preset-sleep-sel-bg: #c4ccff; --preset-sleep-sel-text: #0a1478; --preset-sleep-sel-border: #3040d8;
+    --btn-potty: #c42850; --btn-sleep: #1828b8; --btn-custom: #0a7840; --btn-done: #0a7840;
+    --sub-bg: #ffffff; --sub-border: #c87890; --sub-text: #7a1838;
+    --hooray: #0a7038; --hooray-sub: #286048;
+  }
+  body.dark {
+    --bg: #120d10; --surface: #221418;
+    --tab-active-bg: #341c24; --tab-active-text: #ff7aa0; --tab-inactive: #9e6070;
+    --ring-bg: #2c1418; --time-color: #ff7aa0; --time-sleep: #8899ff; --time-done: #44dd88;
+    --preset-bg: #221418; --preset-border: #58282e; --preset-text: #ee7088;
+    --preset-sel-bg: #44182a; --preset-sel-text: #ffaabb; --preset-sel-border: #dd3060;
+    --preset-sleep-sel-bg: #101c40; --preset-sleep-sel-text: #99aaff; --preset-sleep-sel-border: #4455cc;
+    --btn-potty: #c02848; --btn-sleep: #3344cc; --btn-custom: #18a058; --btn-done: #18a058;
+    --sub-bg: #221418; --sub-border: #58282e; --sub-text: #ee7088;
+    --hooray: #44dd88; --hooray-sub: #70bb98;
+  }
+  body.pastel {
+    --bg: #fff5f7; --surface: #fddde6;
+    --tab-active-bg: #ffffff; --tab-active-text: #d41858; --tab-inactive: #b05068;
+    --ring-bg: #fac8d8; --time-color: #d41858; --time-sleep: #b87000; --time-done: #c01010;
+    --preset-bg: #ffffff; --preset-border: #f098b4; --preset-text: #b01848;
+    --preset-sel-bg: #ffdce8; --preset-sel-text: #a00838; --preset-sel-border: #e84878;
+    --preset-sleep-sel-bg: #fff6c8; --preset-sleep-sel-text: #785000; --preset-sleep-sel-border: #d8a000;
+    --btn-potty: #f02468; --btn-sleep: #d89000; --btn-custom: #d81018; --btn-done: #d81018;
+    --sub-bg: #ffffff; --sub-border: #f098b4; --sub-text: #b01848;
+    --hooray: #d41858; --hooray-sub: #c07000;
+  }
+
+  body {
+    background: var(--bg);
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+
+  .wrap {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 28px; padding: 40px 32px; width: 100%; max-width: 600px;
+  }
+
+  .theme-row { display: flex; gap: 10px; justify-content: flex-end; width: 100%; }
+  .theme-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 3px solid transparent; cursor: pointer;
+    font-size: 18px; display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .theme-btn:active { transform: scale(0.88); }
+  .theme-btn.active { border-color: var(--time-color); }
+  .t-light  { background: #f4ecef; }
+  .t-dark   { background: #221418; }
+  .t-pastel { background: linear-gradient(135deg, #ff6090, #ffcc00, #ff2828); }
+
+  .tabs {
+    display: flex; background: var(--surface);
+    border-radius: 50px; padding: 4px; width: 100%;
+    transition: background 0.3s;
+  }
+  .tab {
+    flex: 1; padding: 13px 0; border: none; background: transparent;
+    border-radius: 46px; font-size: 17px; font-weight: 700;
+    color: var(--tab-inactive); cursor: pointer; font-family: inherit;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: var(--tab-active-bg); color: var(--tab-active-text);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+  }
+
+  .ring-wrap {
+    position: relative; width: 340px; height: 340px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ring-wrap svg {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    transform: rotate(-90deg);
+  }
+  .ring-bg { fill: none; stroke: var(--ring-bg); stroke-width: 14; }
+  .ring-fg { fill: none; stroke-width: 14; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.4s; }
+
+  .time-big {
+    font-size: 96px; font-weight: 900; letter-spacing: -5px;
+    color: var(--time-color); z-index: 1; line-height: 1;
+    font-variant-numeric: tabular-nums; transition: color 0.3s;
+  }
+  .time-big.sleep-c { color: var(--time-sleep); }
+  .time-big.done-c  { color: var(--time-done); font-size: 72px; letter-spacing: -3px; }
+  .time-big.urgent  { color: #bb0808; animation: urge 0.45s infinite alternate; }
+  @keyframes urge { from { transform: scale(1); } to { transform: scale(1.08); } }
+
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .preset {
+    padding: 13px 22px; border-radius: 100px;
+    border: 1.5px solid var(--preset-border); background: var(--preset-bg);
+    font-size: 16px; font-weight: 600; color: var(--preset-text);
+    cursor: pointer; font-family: inherit; min-width: 80px; text-align: center;
+    transition: all 0.15s;
+  }
+  .preset.sel        { background: var(--preset-sel-bg); color: var(--preset-sel-text); border-color: var(--preset-sel-border); border-width: 2px; }
+  .preset.sleep-sel  { background: var(--preset-sleep-sel-bg); color: var(--preset-sleep-sel-text); border-color: var(--preset-sleep-sel-border); border-width: 2px; }
+
+  .custom-inputs { display: flex; gap: 12px; align-items: center; }
+  .custom-inputs input {
+    width: 84px; font-size: 28px; font-weight: 800; text-align: center;
+    border: 1.5px solid var(--preset-border); border-radius: 16px; padding: 10px 4px;
+    color: var(--time-color); font-family: inherit; background: var(--preset-bg); outline: none;
+    transition: border-color 0.2s, background 0.3s, color 0.3s;
+  }
+  .custom-inputs input:focus { border-color: var(--time-color); border-width: 2px; }
+  .custom-inputs span { font-size: 30px; font-weight: 800; color: var(--tab-inactive); }
+
+  .main-btn {
+    width: 120px; height: 120px; border-radius: 50%; border: none;
+    font-size: 40px; cursor: pointer; color: white;
+    background: var(--btn-potty); font-family: inherit;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.22);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.12s, background 0.3s, box-shadow 0.3s;
+  }
+  .main-btn:active { transform: scale(0.90); }
+  .main-btn.sleep-c  { background: var(--btn-sleep); }
+  .main-btn.custom-c { background: var(--btn-custom); }
+  .main-btn.done-c   { background: var(--btn-done); }
+
+  .sub-row { display: flex; gap: 12px; }
+  .sub-btn {
+    padding: 13px 30px; border-radius: 100px;
+    border: 1.5px solid var(--sub-border); background: var(--sub-bg);
+    font-size: 16px; font-weight: 600; color: var(--sub-text);
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .sub-btn:active { opacity: 0.6; }
+
+  .hooray { display: none; flex-direction: column; align-items: center; gap: 4px; }
+  .hooray.show { display: flex; }
+  .hooray-text { font-size: 32px; font-weight: 800; color: var(--hooray); letter-spacing: -0.5px; }
+  .hooray-sub  { font-size: 18px; font-weight: 500; color: var(--hooray-sub); }
+
+  .confetti-area { position: fixed; inset: 0; pointer-events: none; z-index: 99; overflow: hidden; }
+  .dot { position: absolute; border-radius: 50%; animation: fall linear forwards; opacity: 0; }
+  @keyframes fall {
+    0%   { opacity: 1; transform: translateY(-20px) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(110vh) rotate(720deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="confetti-area" id="confetti"></div>
+
+<div class="wrap">
+  <div class="theme-row">
+    <button class="theme-btn t-light active" id="th-light"  onclick="setTheme('light')" >☀️</button>
+    <button class="theme-btn t-dark"         id="th-dark"   onclick="setTheme('dark')"  >🌙</button>
+    <button class="theme-btn t-pastel"       id="th-pastel" onclick="setTheme('pastel')">🎨</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-potty"  onclick="setMode('potty')">🚽 Potty</button>
+    <button class="tab"        id="tab-sleep"  onclick="setMode('sleep')">🌙 Sleep</button>
+    <button class="tab"        id="tab-custom" onclick="setMode('custom')">⏱ Custom</button>
+  </div>
+
+  <div class="ring-wrap">
+    <svg viewBox="0 0 340 340">
+      <circle class="ring-bg" cx="170" cy="170" r="152"/>
+      <circle class="ring-fg" cx="170" cy="170" r="152"
+        id="ring" stroke="#c42850" stroke-dasharray="955" stroke-dashoffset="0"/>
+    </svg>
+    <div class="time-big" id="timedisp">5:00</div>
+  </div>
+
+  <div class="hooray" id="hooray">
+    <div class="hooray-text" id="hooray-text">Yay Chloé! 🎉</div>
+    <div class="hooray-sub"  id="hooray-sub">Good girl! 🌸</div>
+  </div>
+
+  <div id="presets-wrap">
+    <div class="presets">
+      <button class="preset"     onclick="pick(120,this)">2 min</button>
+      <button class="preset sel" onclick="pick(300,this)">5 min</button>
+      <button class="preset"     onclick="pick(900,this)">15 min</button>
+      <button class="preset"     onclick="pick(1800,this)">30 min</button>
+      <button class="preset"     onclick="pick(3600,this)">60 min</button>
+    </div>
+  </div>
+
+  <div class="custom-inputs" id="custom-inputs" style="display:none;">
+    <input type="number" id="cmin" min="0" max="99" value="5" oninput="readCustom()">
+    <span>:</span>
+    <input type="number" id="csec" min="0" max="59" value="0"  oninput="readCustom()">
+  </div>
+
+  <button class="main-btn" id="mainbtn" onclick="toggle()">▶</button>
+
+  <div class="sub-row">
+    <button class="sub-btn" onclick="doReset()">Reset</button>
+    <button class="sub-btn" onclick="plus30()">+30s</button>
+  </div>
+</div>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
+  const CIRC = 955;
+  let mode = 'potty', total = 300, rem = 300;
+  let running = false, done = false, iv = null;
+  let currentTheme = 'light';
+
+  const STROKES = {
+    light:  { potty:'#c42850', sleep:'#1828b8', custom:'#0a7840' },
+    dark:   { potty:'#c02848', sleep:'#3344cc', custom:'#18a058' },
+    pastel: { potty:'#f02468', sleep:'#d89000', custom:'#d81018' }
+  };
+
+  const PRESETS   = [120, 300, 900, 1800, 3600];
+  const MODES = {
+    potty:  { btnC:'',         hooray:'Yay Chloé! 🎉',  sub:'Good girl! 🌸',   timeC:'',        selC:'sel',      default:300  },
+    sleep:  { btnC:'sleep-c',  hooray:'Sleep tight! 🌙', sub:'Sweet dreams 💤', timeC:'sleep-c', selC:'sleep-sel',default:1800 },
+    custom: { btnC:'custom-c', hooray:'All done! ⭐',    sub:'Great job! 🎊',   timeC:'',        selC:'sel',      default:300  }
+  };
+
+  const saved = localStorage.getItem('chloe-theme');
+  if (saved) setTheme(saved, true);
+
+  function pad(n) { return n < 10 ? '0'+n : ''+n; }
+
+  function render() {
+    const el = document.getElementById('timedisp');
+    if (done) { el.textContent = 'Done!'; el.className = 'time-big done-c'; return; }
+    el.textContent = Math.floor(rem/60) + ':' + pad(rem%60);
+    document.getElementById('ring').setAttribute('stroke-dashoffset', CIRC*(1-(total>0?rem/total:1)));
+    const urgent = rem <= 10 && running;
+    el.className = 'time-big' + (urgent ? ' urgent' : (MODES[mode].timeC ? ' '+MODES[mode].timeC : ''));
+  }
+
+  function pick(sec, el) {
+    total = sec; rem = sec;
+    document.querySelectorAll('.preset').forEach(b => b.classList.remove('sel','sleep-sel'));
+    el.classList.add(MODES[mode].selC);
+    doReset();
+  }
+
+  function readCustom() {
+    const m = parseInt(document.getElementById('cmin').value)||0;
+    const s = parseInt(document.getElementById('csec').value)||0;
+    total = m*60+s; rem = total; render();
+  }
+
+  function setMode(m) {
+    mode = m;
+    ['potty','sleep','custom'].forEach(x =>
+      document.getElementById('tab-'+x).className = 'tab'+(x===m?' active':''));
+    document.getElementById('presets-wrap').style.display  = m==='custom'?'none':'block';
+    document.getElementById('custom-inputs').style.display = m==='custom'?'flex':'none';
+    document.getElementById('ring').setAttribute('stroke', STROKES[currentTheme][m]);
+    if (m !== 'custom') {
+      total = MODES[m].default; rem = total;
+      const btns = document.querySelectorAll('.preset');
+      btns.forEach(b => b.classList.remove('sel','sleep-sel'));
+      const idx = PRESETS.indexOf(MODES[m].default);
+      if (idx >= 0) btns[idx].classList.add(MODES[m].selC);
+    } else { readCustom(); }
+    doReset();
+  }
+
+  function toggle() {
+    if (done) { doReset(); return; }
+    running ? pause() : play();
+  }
+
+  function play() {
+    if (rem <= 0) return;
+    running = true;
+    document.getElementById('mainbtn').textContent = '⏸';
+    iv = setInterval(() => { if(rem>0){rem--;render();} if(rem===0)finish(); }, 1000);
+  }
+
+  function pause() {
+    running = false; clearInterval(iv);
+    document.getElementById('mainbtn').textContent = '▶';
+    render();
+  }
+
+  function finish() {
+    clearInterval(iv); running=false; done=true;
+    document.getElementById('ring').setAttribute('stroke-dashoffset', CIRC);
+    document.getElementById('mainbtn').textContent = '↩';
+    document.getElementById('mainbtn').className   = 'main-btn done-c';
+    document.getElementById('hooray').classList.add('show');
+    document.getElementById('hooray-text').textContent = MODES[mode].hooray;
+    document.getElementById('hooray-sub').textContent  = MODES[mode].sub;
+    render(); burst();
+  }
+
+  function doReset() {
+    clearInterval(iv); running=false; done=false; rem=total;
+    document.getElementById('mainbtn').textContent = '▶';
+    document.getElementById('mainbtn').className   = 'main-btn '+(MODES[mode].btnC);
+    document.getElementById('hooray').classList.remove('show');
+    render();
+  }
+
+  function plus30() {
+    if (done) return;
+    rem=Math.min(rem+30,7200); total=Math.max(total,rem); render();
+  }
+
+  function setTheme(t, silent) {
+    currentTheme = t;
+    document.body.className = t==='light' ? '' : t;
+    ['light','dark','pastel'].forEach(x =>
+      document.getElementById('th-'+x).classList.toggle('active', x===t));
+    document.getElementById('ring').setAttribute('stroke', STROKES[t][mode]);
+    if (!silent) localStorage.setItem('chloe-theme', t);
+  }
+
+  function burst() {
+    const colors = ['#c42850','#f0b840','#30cc78','#4878f0','#f07830','#9040d0','#20c8aa'];
+    const wrap   = document.getElementById('confetti');
+    for (let i=0; i<48; i++) {
+      setTimeout(() => {
+        const d = document.createElement('div');
+        d.className = 'dot';
+        d.style.left = Math.random()*100 + 'vw';
+        d.style.top  = '-12px';
+        d.style.background = colors[Math.floor(Math.random()*colors.length)];
+        const sz = 7 + Math.random()*10;
+        d.style.width = d.style.height = sz+'px';
+        d.style.animationDuration = (1.8+Math.random()*1.5)+'s';
+        wrap.appendChild(d);
+        setTimeout(() => d.remove(), 3800);
+      }, i*50);
+    }
+  }
+
+  render();
+</script>
+</body>
+</html>
